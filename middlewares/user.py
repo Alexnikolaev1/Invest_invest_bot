@@ -6,6 +6,7 @@ from typing import Any, Awaitable, Callable
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject
 
+from middlewares.access import extract_user
 from database import get_or_create_user
 from utils.db_async import run_db
 
@@ -19,7 +20,7 @@ class UserRegistrationMiddleware(BaseMiddleware):
         event: TelegramObject,
         data: dict[str, Any],
     ) -> Any:
-        user = getattr(event, "from_user", None)
+        user = extract_user(event)
         if user:
             try:
                 db_user = await run_db(get_or_create_user, user.id, user.full_name or "")

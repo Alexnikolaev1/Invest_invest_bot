@@ -61,3 +61,35 @@ TTS_VOICE = "ru-RU-SvetlanaNeural"
 TTS_MIN_LENGTH = 300  # озвучиваем ответы длиннее этого числа символов
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
+# ---------- Доступ ----------
+# Если задан — бот отвечает только указанным Telegram user id.
+# Один id: ALLOWED_USER_ID=123456789
+# Несколько через запятую: ALLOWED_USER_ID=123456789,987654321
+def _parse_allowed_user_ids() -> frozenset[int] | None:
+    raw = os.getenv("ALLOWED_USER_ID", "").strip()
+    if not raw:
+        return None
+
+    ids: set[int] = set()
+    for part in raw.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            user_id = int(part)
+        except ValueError as exc:
+            raise RuntimeError(
+                "ALLOWED_USER_ID должен содержать целые числа через запятую "
+                "(Telegram user id), например: 123456789 или 123,456,789"
+            ) from exc
+        if user_id <= 0:
+            raise RuntimeError("ALLOWED_USER_ID: каждый id должен быть положительным числом.")
+        ids.add(user_id)
+
+    if not ids:
+        return None
+    return frozenset(ids)
+
+
+ALLOWED_USER_IDS = _parse_allowed_user_ids()

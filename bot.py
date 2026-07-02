@@ -17,10 +17,11 @@ from aiohttp import web
 
 from config import (
     TELEGRAM_BOT_TOKEN, WEBHOOK_URL, WEBHOOK_PATH, PORT, USE_WEBHOOK, LOG_LEVEL,
+    ALLOWED_USER_IDS,
 )
 from database import init_db
 from handlers import all_routers
-from middlewares import UserRegistrationMiddleware
+from middlewares import AccessControlMiddleware, UserRegistrationMiddleware
 
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL, logging.INFO),
@@ -31,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 def create_dispatcher() -> Dispatcher:
     dp = Dispatcher(storage=MemoryStorage())
+    dp.update.middleware(AccessControlMiddleware())
     dp.update.middleware(UserRegistrationMiddleware())
     for router in all_routers:
         dp.include_router(router)
@@ -75,6 +77,13 @@ def main():
         raise RuntimeError("TELEGRAM_BOT_TOKEN не задан в переменных окружения.")
 
     init_db()
+
+    if ALLOWED_USER_IDS is not None:
+        logger.info("Доступ ограничен: user_ids=%s", sorted(ALLOWED_USER_IDS))
+    else:
+        logger.warning(
+            "ALLOWED_USER_ID не задан — бот доступен всем пользователям Telegram."
+        )
 
     bot = Bot(
         token=TELEGRAM_BOT_TOKEN,

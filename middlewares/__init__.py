@@ -1,3 +1,4 @@
+from .access import AccessControlMiddleware
 from .user import UserRegistrationMiddleware
 
-__all__ = ["UserRegistrationMiddleware"]
+__all__ = ["AccessControlMiddleware", "UserRegistrationMiddleware"]
